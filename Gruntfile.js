@@ -26,8 +26,8 @@ module.exports = function(grunt) {
     image_diff: {
       default_options: {
         options: {
-          orig: '_orig',
-          diff: '_diff',
+          orig: '_baseline',
+          test: '_latest',
         },
         src: './screenshots/*.png'
       }

@@ -5,11 +5,7 @@
 ## Getting Started
 This plugin requires Grunt `~0.4.2`
 
-If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
-
-```shell
-npm install grunt-image-diff --save-dev
-```
+If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins.
 
 Once the plugin has been installed, it may be enabled inside your Gruntfile with this line of JavaScript:
 
@@ -55,17 +51,17 @@ Default value: `'_diff'`
 
 A string value difference file pattern to write difference to the file.
 
-#### options.luminanceonly
+#### options.fuzz
 Type: `Bool`
 Default value: `true`
 
-To only consider luminance; ignore chroma (color) in the comparation.
+Colors within this distance are considered equal. A number of algorithms search for a target color. By default the color must be exact. Use this option to match colors that are close to the target color in RGB space.
 
-#### options.colorfactor
+#### options.highlight
 Type: `String`
-Default value: `'0.0'`
+Default value: `'red'`
 
-How much of color to use, 0.0 to 1.0, 0.0 = ignore color.
+when comparing images, emphasize pixel differences with this color.
 
 ### Usage Examples
 
@@ -84,5 +80,4 @@ grunt.initConfig({
 });
 ```
 ## Release History
-0.1.1 - Change options. Include luminanceonly and colorfactor.
 0.1.0 - First version.

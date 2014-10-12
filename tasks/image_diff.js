@@ -1,5 +1,5 @@
 /*
- * grunt-image-diff
+ * grunt-image-diff-magick
  * https://github.com/eduardo.pacheco/image-diff
  *
  * Copyright (c) 2013
@@ -10,12 +10,11 @@
 
 var path = require('path');
 var shell = require('shelljs');
-
-var perceptualdiff = path.join(__dirname, '../bin/perceptualdiff.exe');
+var sizeof = require('image-size');
 
 module.exports = function(grunt) {
 
-  grunt.registerMultiTask('image_diff', 'Grunt implementation of Perceptual Image Diff', function() {
+  grunt.registerMultiTask('image_diff', 'Grunt implementation of Perceptual Image Diff with ImageMagick', function() {
     if (process.platform !== "win32") {
       grunt.log.warn('Only valid in windows, sorry :(.');
       return;
@@ -25,8 +24,8 @@ module.exports = function(grunt) {
       orig: '_orig',
       test: '_test',
       diff: '_diff',
-      colorfactor: '0.0',
-      luminanceonly: true,
+      fuzz: '0.0',
+      highlight: 'red',
     });
 
     var tests = 0;
@@ -45,31 +44,30 @@ module.exports = function(grunt) {
         
         tests++;
 
-        var cmd = perceptualdiff + ' "' + orig + '" "' + test + '" -verbose -output "' + diff + '" ';
-		if (options.luminanceonly) {
-			cmd += '-luminanceonly ';
-		}
-		if (options.colorfactor) {
-			cmd += '-colorfactor '+ options.colorfactor +' ';
-		}
-        var result = shell.exec(cmd, {silent:true, async:false}).output;
-        
-        var success = false;
-        if (result.match(/PASS: /)) {
-          result = result.split('PASS: ');
-          success = true;
-        } else {
-          result = result.split('FAIL: ');
-        }
-        
-        var msg = "Invalid file.";
-        if (result && result.length > 1) {
-          result = result[1].split("\r\n");
-          msg = result[0];
+        var origDim = sizeof(orig);
+        var testDim = sizeof(test);
+
+        //ImageMagick cannot compare 2 images with different dimensions
+        if( origDim.height !== testDim.height || origDim.width !== testDim.width ) {
+            var maxWidth = Math.max(origDim.width, testDim.width);
+            var maxHeight = Math.max(origDim.height, testDim.height);
+            var resizeResult;
+
+            resizeResult = shell.exec('mogrify -background white -gravity north -extent ' + maxWidth + 'x' + maxHeight + ' "' + orig + '"', {silent: true, async: false});
+            resizeResult = shell.exec('mogrify -background white -gravity north -extent ' + maxWidth + 'x' + maxHeight + ' "' + test + '"', {silent: true, async: false});
         }
 
-        if ( ! success) {
-          grunt.fail.warn(orig + ': "' + msg + '" see diff file "' + diff + '"');
+        var cmdOptions = '-highlight-color ' + options.highlight + ' ';
+		if (options.fuzz) {
+			cmdOptions += '-fuzz '+ options.fuzz +' ';
+		}
+        var cmd = 'compare -metric rmse ' + cmdOptions + '"' + orig + '" "' + test + '" "' + diff + '" ';
+        var result = shell.exec(cmd, {silent:true, async:false}).output;
+        
+        var fail = result.code;
+
+        if ( fail ) {
+          grunt.fail.warn('FAIL: " diff file created at "' + diff + '"');
         }
       });
     });
